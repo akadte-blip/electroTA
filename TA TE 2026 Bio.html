@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualization Dashboard Sidang TA Elektro - Dark Glassmorphism</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- jsPDF & AutoTable CDN untuk Export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- SheetJS (xlsx) untuk Export Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            background-color: #0b0c10;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(249, 115, 22, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(234, 88, 12, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(18, 18, 20, 0.5) 0%, transparent 100%);
+            color: #f3f4f6;
+        }
+
+        /* Hero Background Overlay */
+        .hero-bg-container {
+            position: relative;
+            background-image: url('WhatsApp Image 2026-08-15 at 15.56.56_2.jpeg');
+            background-size: cover;
+            background-position: center;
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .hero-bg-overlay {
+            background: linear-gradient(180deg, rgba(11, 12, 16, 0.75) 0%, rgba(11, 12, 16, 0.92) 100%);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        /* Glassmorphism Panel Base */
+        .glass-panel {
+            background: rgba(22, 22, 26, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-radius: 24px;
+        }
+
+        .glass-recessed {
+            background: rgba(12, 12, 15, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f3f4f6;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            outline: none;
+            border-color: rgba(249, 115, 22, 0.6);
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.2);
+        }
+
+        .glass-btn {
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+            box-shadow: 0 4px 15px rgba(234, 88, 12, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .glass-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(234, 88, 12, 0.5);
+        }
+
+        .glass-btn-light {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e5e7eb;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .glass-btn-light:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+        }
+
+        /* Sidebar Nav Dock Style */
+        .sidebar-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .sidebar-icon:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .sidebar-icon.active {
+            background: #ffffff;
+            color: #0b0c10;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Transitions & Animations */
+        .tab-view {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .tab-view.hidden {
+            display: none !important;
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        /* Scrollbar Style */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(249, 115, 22, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased text-gray-200">
+
+    <!-- LOGIN SCREEN OVERLAY -->
+    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0b0c10]/95 backdrop-blur-2xl transition-all duration-700">
+        <div class="glass-panel w-full max-w-md p-8 relative overflow-hidden">
+            <div class="absolute -top-10 -left-10 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="text-center mb-8 relative z-10">
+                <div class="inline-flex p-4 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-2xl mb-4 shadow-lg shadow-orange-500/10">
+                    <i class="fa-solid fa-graduation-cap text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold tracking-tight text-white">EPORT Sidang TA</h2>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Dashboard Penilaian Sidang & Akademik</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 relative z-10">
+                <div id="loginError" class="hidden p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-xs font-semibold text-center">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Username atau password salah!
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-500">
+                            <i class="fa-solid fa-user text-xs"></i>
+                        </span>
+                        <input type="text" id="loginUsername" required placeholder="Masukkan username" class="w-full glass-input rounded-xl py-3 pl-10 pr-4 text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-500">
+                            <i class="fa-solid fa-lock text-xs"></i>
+                        </span>
+                        <input type="password" id="loginPassword" required placeholder="Masukkan password" class="w-full glass-input rounded-xl py-3 pl-10 pr-4 text-sm">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full glass-btn text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Masuk ke Dashboard</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD APP WRAPPER -->
+    <div id="mainApp" class="hidden flex min-h-screen">
+
+        <!-- FLOATING SIDEBAR NAVIGATION DOCK -->
+        <aside class="fixed left-4 top-4 bottom-4 w-20 glass-panel z-40 flex flex-col items-center justify-between py-6 hidden md:flex">
+            <div class="flex flex-col items-center space-y-6">
+                <div class="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-orange-500/40">
+                    <i class="fa-solid fa-bolt text-lg"></i>
+                </div>
+
+                <div class="flex flex-col space-y-4 pt-4 border-t border-white/10">
+                    <div id="sideNavAnalytics" onclick="switchTab('analytics')" class="sidebar-icon active" title="Data Akademik">
+                        <i class="fa-solid fa-house text-lg"></i>
+                    </div>
+                    <div id="sideNavScore" onclick="switchTab('score')" class="sidebar-icon" title="Penilaian Sidang">
+                        <i class="fa-solid fa-award text-lg"></i>
+                    </div>
+                    <div id="sideNavBio" onclick="switchTab('biodata')" class="sidebar-icon" title="Biodata & Transkrip">
+                        <i class="fa-solid fa-id-card text-lg"></i>
+                    </div>
+                    <div onclick="resetAllFilters()" class="sidebar-icon" title="Refresh Data">
+                        <i class="fa-solid fa-arrows-rotate text-lg"></i>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="handleLogout()" class="sidebar-icon hover:bg-rose-500/20 hover:text-rose-400" title="Logout">
+                <i class="fa-solid fa-right-from-bracket text-lg"></i>
+            </button>
+        </aside>
+
+        <!-- MAIN LAYOUT AREA -->
+        <div class="flex-1 md:ml-28 p-4 md:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
+
+            <!-- HERO HEADER -->
+            <header class="hero-bg-container shadow-2xl border border-white/10">
+                <div class="hero-bg-overlay p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-xs font-semibold mb-3 backdrop-blur-md">
+                            <i class="fa-solid fa-building-columns"></i> Gedung Fakultas Teknik Elektro
+                        </div>
+                        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                            Hey....?
+                        </h1>
+                        <p class="text-sm text-gray-300 mt-1 max-w-xl font-medium leading-relaxed">
+                            Visualisasi & Pengolahan Data Akademik, & Evaluasi Penilaian Sidang Tugas Akhir
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-3 glass-panel px-4 py-2.5">
+                            <div class="w-9 h-9 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 flex items-center justify-center font-bold text-xs shadow-inner">
+                                AH
+                            </div>
+                            <div class="text-left hidden sm:block">
+                                <p class="text-xs font-bold text-white">Admin Elektro</p>
+                                <p class="text-[10px] text-gray-400">Prodi Teknik Elektro</p>
+                            </div>
+                        </div>
+                        <button onclick="handleLogout()" class="md:hidden glass-btn-light px-3 py-2.5 rounded-xl text-xs font-bold text-rose-400">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- SECTION CARD STATISTIK WIDGET -->
+            <section class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold tracking-wide uppercase text-gray-400 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-simple text-orange-500"></i> Ringkasan Aktivitas Sidang
+                    </h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div onclick="switchTab('analytics')" class="glass-panel p-5 relative overflow-hidden cursor-pointer hover:border-orange-500/40 transition-all duration-300 group">
+                        <div class="flex justify-between items-start">
+                            <div class="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center">
+                                <i class="fa-solid fa-users text-base"></i>
+                            </div>
+                            <span class="text-[10px] text-gray-400 font-medium bg-white/5 px-2 py-0.5 rounded-full">Akademik</span>
+                        </div>
+                        <div class="mt-4">
+                            <h2 id="cardTotalMhs" class="text-3xl font-extrabold text-white">0</h2>
+                            <p class="text-xs text-gray-400 mt-0.5 font-medium">Total Mahasiswa TA</p>
+                        </div>
+                        <div class="mt-3 text-[11px] text-orange-400/90 font-semibold flex items-center gap-1">
+                            <span>Buka Data Akademik</span> <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+
+                    <div onclick="switchTab('score')" class="glass-panel p-5 relative overflow-hidden cursor-pointer hover:border-emerald-500/40 transition-all duration-300 group">
+                        <div class="flex justify-between items-start">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                <i class="fa-solid fa-chart-line text-base"></i>
+                            </div>
+                            <span class="text-[10px] text-gray-400 font-medium bg-white/5 px-2 py-0.5 rounded-full">Evaluasi</span>
+                        </div>
+                        <div class="mt-4">
+                            <h2 id="cardAvgScore" class="text-3xl font-extrabold text-white">0.00</h2>
+                            <p class="text-xs text-gray-400 mt-0.5 font-medium">Rata-Rata Nilai Sidang</p>
+                        </div>
+                        <div class="mt-3 text-[11px] text-emerald-400/90 font-semibold flex items-center gap-1">
+                            <span>Buka Penilaian Sidang</span> <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+
+                    <div onclick="switchTab('biodata')" class="glass-panel p-5 relative overflow-hidden cursor-pointer hover:border-purple-500/40 transition-all duration-300 group">
+                        <div class="flex justify-between items-start">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+                                <i class="fa-solid fa-address-card text-base"></i>
+                            </div>
+                            <span class="text-[10px] text-gray-400 font-medium bg-white/5 px-2 py-0.5 rounded-full">Katalog</span>
+                        </div>
+                        <div class="mt-4">
+                            <h2 id="cardTotalBiodata" class="text-3xl font-extrabold text-white">0</h2>
+                            <p class="text-xs text-gray-400 mt-0.5 font-medium">Biodata & Transkrip</p>
+                        </div>
+                        <div class="mt-3 text-[11px] text-purple-400/90 font-semibold flex items-center gap-1">
+                            <span>Lihat Katalog Lengkap</span> <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+
+                    <div onclick="resetAllFilters()" class="glass-panel p-5 relative overflow-hidden cursor-pointer hover:border-sky-500/40 transition-all duration-300 group">
+                        <div class="flex justify-between items-start">
+                            <div class="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center">
+                                <i class="fa-solid fa-arrows-rotate text-base"></i>
+                            </div>
+                            <span id="statusText" class="text-[10px] text-sky-400 font-bold bg-sky-500/10 px-2.5 py-0.5 rounded-full">Terhubung</span>
+                        </div>
+                        <div class="mt-4">
+                            <h2 id="cardPassRate" class="text-3xl font-extrabold text-white">0%</h2>
+                            <p class="text-xs text-gray-400 mt-0.5 font-medium">Persentase Kelulusan</p>
+                        </div>
+                        <div class="mt-3 text-[11px] text-sky-400/90 font-semibold flex items-center gap-1">
+                            <span>Reset Filter / Refresh</span> <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HALAMAN 1: DATA AKADEMIK VIEW -->
+            <div id="viewAnalytics" class="tab-view space-y-6">
+                <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-panel p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-orange-400"></i> Konsentrasi Studi
+                            </h4>
+                            <span class="text-[10px] text-gray-400 font-medium">*Klik Diagram</span>
+                        </div>
+                        <div class="glass-recessed p-3 relative h-60">
+                            <canvas id="chartKonsentrasi"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-column text-amber-400"></i> Program / Kelas
+                            </h4>
+                            <span class="text-[10px] text-gray-400 font-medium">*Klik Diagram</span>
+                        </div>
+                        <div class="glass-recessed p-3 relative h-60">
+                            <canvas id="chartKelas"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-user-check text-orange-500"></i> Dosen Pembimbing
+                            </h4>
+                            <span class="text-[10px] text-gray-400 font-medium">*Klik Diagram</span>
+                        </div>
+                        <div class="glass-recessed p-3 relative h-60">
+                            <canvas id="chartDosen"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="glass-panel p-6 space-y-5">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <h4 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-table text-orange-400"></i> Data Mahasiswa & Judul TA
+                            </h4>
+                            <button onclick="openModal('add')" class="glass-btn text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2">
+                                <i class="fa-solid fa-plus text-xs"></i>
+                                <span>Input Data Baru</span>
+                            </button>
+                            <button onclick="downloadPDFAcademic()" class="glass-btn-light text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 text-rose-400">
+                                <i class="fa-solid fa-file-pdf"></i>
+                                <span>PDF</span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <input type="text" id="tableSearchAcademic" onkeyup="filterTableAcademic()" 
+                                placeholder="Cari Nama, NIM, atau Judul..." 
+                                class="glass-input rounded-xl px-4 py-2 text-xs w-full sm:w-64">
+                            <button onclick="resetTableAcademic()" title="Reset Search" class="glass-btn-light px-3 py-2 rounded-xl text-xs font-bold">
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-white/10 glass-recessed">
+                        <table class="w-full text-left text-xs text-gray-300 table-fixed">
+                            <thead class="bg-white/5 border-b border-white/10 text-gray-400 uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="p-4 w-[10%] text-center">NIM</th>
+                                    <th class="p-4 w-[16%]">Nama Mahasiswa</th>
+                                    <th class="p-4 w-[10%] text-center">Kelas</th>
+                                    <th class="p-4 w-[12%] text-center">Konsentrasi</th>
+                                    <th class="p-4 w-[26%]">Judul Tugas Akhir</th>
+                                    <th class="p-4 w-[14%]">Dosen Pembimbing</th>
+                                    <th class="p-4 w-[14%] text-center">Jadwal Sidang</th>
+                                  </tr>
+                            </thead>
+                            <tbody id="tableBodyAcademic" class="divide-y divide-white/5">
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- HALAMAN 2: PENILAIAN SIDANG VIEW -->
+            <div id="viewScore" class="tab-view space-y-6 hidden">
+                <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-panel p-6 lg:col-span-2">
+                        <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-orange-400"></i> Perbandingan Komponen Penilaian
+                        </h4>
+                        <div class="glass-recessed p-3 relative h-64">
+                            <canvas id="chartComponents"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-pie-chart text-amber-400"></i> Predikat Kelulusan
+                            </h4>
+                            <span class="text-[10px] text-gray-400 font-medium">*Klik Diagram</span>
+                        </div>
+                        <div class="glass-recessed p-3 relative h-64">
+                            <canvas id="chartGrade"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="glass-panel p-6 space-y-5">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <h4 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-orange-400"></i> Daftar Nilai Sidang Mahasiswa
+                            </h4>
+                            <button onclick="openModal('add')" class="glass-btn text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2">
+                                <i class="fa-solid fa-plus text-xs"></i>
+                                <span>Input Data Baru</span>
+                            </button>
+                            <button onclick="downloadPDFScore()" class="glass-btn-light text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 text-rose-400">
+                                <i class="fa-solid fa-file-pdf"></i>
+                                <span>PDF</span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <input type="text" id="tableSearchScore" onkeyup="filterTableScore()" 
+                                placeholder="Cari NIM atau Nama..." 
+                                class="glass-input rounded-xl px-4 py-2 text-xs w-full sm:w-64">
+                            <button onclick="resetTableScore()" title="Reset Search" class="glass-btn-light px-3 py-2 rounded-xl text-xs font-bold">
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-white/10 glass-recessed">
+                        <table class="w-full text-left text-xs text-gray-300">
+                            <thead class="bg-white/5 border-b border-white/10 text-gray-400 uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="p-4">NIM</th>
+                                    <th class="p-4">Nama Mahasiswa</th>
+                                    <th class="p-4 text-center">Pembimbing</th>
+                                    <th class="p-4 text-center">Penguji 1</th>
+                                    <th class="p-4 text-center">Penguji 2</th>
+                                    <th class="p-4 text-center">Ketua Sidang</th>
+                                    <th class="p-4 text-center">Nilai Akhir</th>
+                                    <th class="p-4 text-center">Grade</th>
+                                    <th class="p-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBodyScore" class="divide-y divide-white/5">
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- HALAMAN 3: BIODATA & TRANSKRIP VIEW -->
+            <div id="viewBiodata" class="tab-view space-y-6 hidden">
+                <section class="glass-panel p-6 space-y-5">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-white/10 pb-4">
+                        <div>
+                            <h4 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-address-card text-orange-400"></i> Katalog Biodata Lengkap & Nilai Akhir
+                            </h4>
+                            <p class="text-xs text-gray-400 mt-1">*Klik kartu untuk memilih mahasiswa tertentu, lalu cetak Formulir Sidang (PDF).</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                            <input type="text" id="searchBiodata" onkeyup="filterBiodataCards()" 
+                                placeholder="Cari Nama, NIM, atau Judul..." 
+                                class="glass-input rounded-xl px-4 py-2 text-xs w-full sm:w-60">
+                            
+                            <button onclick="downloadFormLayoutPDF()" class="glass-btn-light text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 text-rose-400">
+                                <i class="fa-solid fa-file-pdf"></i>
+                                <span>Unduh Form PDF</span>
+                            </button>
+
+                            <button onclick="exportBiodataExcel()" class="glass-btn-light text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 text-emerald-400">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Excel</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="selectedBiodataBanner" class="hidden glass-recessed p-3 rounded-xl flex items-center justify-between border border-orange-500/30 bg-orange-500/10">
+                        <div class="flex items-center space-x-2 text-xs font-semibold text-orange-300">
+                            <i class="fa-solid fa-filter text-orange-400"></i>
+                            <span>Menampilkan data: <span id="selectedBiodataName" class="text-white font-bold"></span></span>
+                        </div>
+                        <button onclick="resetBiodataSelection()" class="glass-btn-light text-xs px-3 py-1 rounded-lg">
+                            Tampilkan Semua
+                        </button>
+                    </div>
+
+                    <div id="biodataContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+                    </div>
+                </section>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL EDIT KHUSUS JADWAL SIDANG -->
+    <div id="jJadwalModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="glass-panel w-full max-w-lg my-8 overflow-hidden border border-white/20">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-orange-400"></i> Update Jadwal Sidang
+                </h3>
+                <button onclick="closeJadwalModal()" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="jadwalEditForm" onsubmit="handleJadwalEditSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="jadwalNim" />
+
+                <!-- Rincian Mahasiswa (Read-Only) -->
+                <div class="glass-recessed p-4 space-y-2 text-xs border border-white/5">
+                    <div class="flex justify-between border-b border-white/5 pb-1.5">
+                        <span class="text-gray-400 font-semibold">NIM:</span>
+                        <span id="displayJadwalNim" class="font-mono font-bold text-orange-400">-</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1.5">
+                        <span class="text-gray-400 font-semibold">Nama Mahasiswa:</span>
+                        <span id="displayJadwalNama" class="font-bold text-white">-</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1.5">
+                        <span class="text-gray-400 font-semibold">Kelas / Konsentrasi:</span>
+                        <span id="displayJadwalKelasKon" class="text-gray-300 font-medium">-</span>
+                    </div>
+                    <div class="flex justify-between border-b border-white/5 pb-1.5">
+                        <span class="text-gray-400 font-semibold">Dosen Pembimbing:</span>
+                        <span id="displayJadwalDosen" class="text-gray-300 font-medium">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 font-semibold block mb-1">Judul Tugas Akhir:</span>
+                        <p id="displayJadwalJudul" class="text-gray-300 italic glass-recessed p-2 text-[11px] leading-relaxed">-</p>
+                    </div>
+                </div>
+
+                <!-- Satu-satunya input yang bisa di-update -->
+                <div class="border-t border-white/10 pt-4 space-y-2">
+                    <label class="block text-xs font-bold text-orange-400 uppercase tracking-wider">Jadwal Sidang Baru</label>
+                    <input type="datetime-local" id="inputJadwalOnly" required class="w-full glass-input rounded-xl p-3 text-xs">
+                </div>
+
+                <div class="pt-4 border-t border-white/10 flex justify-end gap-3">
+                    <button type="button" onclick="closeJadwalModal()" class="glass-btn-light px-4 py-2 text-xs font-bold rounded-xl">Batal</button>
+                    <button type="submit" id="btnSubmitJadwalEdit" class="glass-btn px-5 py-2 text-xs font-bold rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan Jadwal</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL FORM INPUT & EDIT NILAI/DATA LENGKAP -->
+    <div id="dataModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="glass-panel w-full max-w-2xl my-8 overflow-hidden border border-white/20">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 id="modalTitle" class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-file-pen text-orange-400"></i> Form Input Data & Penilaian Sidang
+                </h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="unifiedForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="formOldNim" />
+
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-orange-400 block mb-3">1. Identitas & Akademik</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">NIM Mahasiswa</label>
+                            <input type="text" id="formNim" required placeholder="Contoh: 2550017001" class="w-full glass-input rounded-xl p-2.5 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
+                            <input type="text" id="formNama" required placeholder="Contoh: MUHAMMAD SAIID ABDURROHMAN" class="w-full glass-input rounded-xl p-2.5 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Kelas / Program</label>
+                            <input type="text" id="formKelas" placeholder="Misal: Kerja Sama" class="w-full glass-input rounded-xl p-2.5 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Konsentrasi</label>
+                            <input type="text" id="formKonsentrasi" placeholder="Misal: Teknik Tenaga Listrik (TTL)" class="w-full glass-input rounded-xl p-2.5 text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/10 pt-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-orange-400 block mb-3">2. Data Tugas Akhir & Jadwal</span>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Judul Tugas Akhir / Skripsi</label>
+                            <textarea id="formJudul" rows="2" placeholder="Masukkan judul..." class="w-full glass-input rounded-xl p-2.5 text-xs"></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Nama Dosen Pembimbing</label>
+                                <input type="text" id="formDosen" placeholder="Nama Dosen Pembimbing..." class="w-full glass-input rounded-xl p-2.5 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Jadwal Sidang</label>
+                                <input type="datetime-local" id="formJadwal" class="w-full glass-input rounded-xl p-2.5 text-xs">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/10 pt-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-orange-400 block mb-3">3. Komponen Penilaian Sidang (Skala 0 - 100)</span>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="glass-recessed p-3">
+                            <label class="block text-[11px] text-gray-400 mb-1">Pembimbing (10%)</label>
+                            <input type="number" step="0.1" min="0" max="100" id="formPem" oninput="calcLiveAverage()" placeholder="0 - 100" class="w-full glass-input rounded-lg p-2 text-xs font-bold text-orange-400">
+                        </div>
+                        <div class="glass-recessed p-3">
+                            <label class="block text-[11px] text-gray-400 mb-1">Penguji 1 (30%)</label>
+                            <input type="number" step="0.1" min="0" max="100" id="formP1" oninput="calcLiveAverage()" placeholder="0 - 100" class="w-full glass-input rounded-lg p-2 text-xs font-bold text-amber-400">
+                        </div>
+                        <div class="glass-recessed p-3">
+                            <label class="block text-[11px] text-gray-400 mb-1">Penguji 2 (30%)</label>
+                            <input type="number" step="0.1" min="0" max="100" id="formP2" oninput="calcLiveAverage()" placeholder="0 - 100" class="w-full glass-input rounded-lg p-2 text-xs font-bold text-amber-400">
+                        </div>
+                        <div class="glass-recessed p-3">
+                            <label class="block text-[11px] text-gray-400 mb-1">Ketua Sidang (30%)</label>
+                            <input type="number" step="0.1" min="0" max="100" id="formKet" oninput="calcLiveAverage()" placeholder="0 - 100" class="w-full glass-input rounded-lg p-2 text-xs font-bold text-amber-400">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-recessed p-4 flex items-center justify-between border border-orange-500/30">
+                    <span class="text-xs font-medium text-gray-400">Estimasi Nilai Akhir:</span>
+                    <span id="liveAverage" class="text-2xl font-black text-orange-400">0.00</span>
+                </div>
+
+                <div class="pt-4 border-t border-white/10 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="glass-btn-light px-4 py-2 text-xs font-bold rounded-xl">Batal</button>
+                    <button type="submit" id="btnSubmitForm" class="glass-btn px-5 py-2 text-xs font-bold rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Simpan Data</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz8arkZLUVB_GJcW0Q78VXnhw6MGCdWN9gqNUVyJs8Hi39a56s7CE6q5eEI77e849C3/exec";
+
+        let chartComponentsInstance = null;
+        let chartGradeInstance = null;
+        let chartKonsentrasiInstance = null;
+        let chartKelasInstance = null;
+        let chartDosenInstance = null;
+
+        let globalData = [];
+        let currentScoreData = [];
+        let currentAcademicData = [];
+        let currentBiodataData = [];
+
+        let currentMode = 'add';
+        let activeSelectedNim = null;
+
+        function checkAuth() {
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+            const loginScreen = document.getElementById('loginScreen');
+            const mainApp = document.getElementById('mainApp');
+
+            if (isLoggedIn) {
+                loginScreen.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    loginScreen.classList.add('hidden');
+                    mainApp.classList.remove('hidden');
+                    fetchAndRenderData();
+                }, 400);
+            } else {
+                loginScreen.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                mainApp.classList.add('hidden');
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const usernameInput = document.getElementById('loginUsername').value.trim();
+            const passwordInput = document.getElementById('loginPassword').value.trim();
+            const loginError = document.getElementById('loginError');
+
+            if (usernameInput === 'admin' && passwordInput === '5up3relektro') {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                loginError.classList.add('hidden');
+                checkAuth();
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('isLoggedIn');
+            checkAuth();
+        }
+
+        function switchTab(tab) {
+            const viewScore = document.getElementById('viewScore');
+            const viewAnalytics = document.getElementById('viewAnalytics');
+            const viewBiodata = document.getElementById('viewBiodata');
+            
+            const sideAnalytics = document.getElementById('sideNavAnalytics');
+            const sideScore = document.getElementById('sideNavScore');
+            const sideBio = document.getElementById('sideNavBio');
+
+            viewAnalytics.classList.add('hidden');
+            viewScore.classList.add('hidden');
+            viewBiodata.classList.add('hidden');
+
+            if (sideAnalytics) sideAnalytics.classList.remove('active');
+            if (sideScore) sideScore.classList.remove('active');
+            if (sideBio) sideBio.classList.remove('active');
+
+            if (tab === 'analytics') {
+                viewAnalytics.classList.remove('hidden');
+                if (sideAnalytics) sideAnalytics.classList.add('active');
+            } else if (tab === 'score') {
+                viewScore.classList.remove('hidden');
+                if (sideScore) sideScore.classList.add('active');
+            } else if (tab === 'biodata') {
+                viewBiodata.classList.remove('hidden');
+                if (sideBio) sideBio.classList.add('active');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('dataModal').classList.add('hidden');
+        }
+
+        function openJadwalModal(targetNim) {
+            const row = globalData.find(item => String(item.nim).trim() === String(targetNim).trim());
+            if (row) {
+                document.getElementById('jadwalNim').value = row.nim || '';
+                document.getElementById('displayJadwalNim').innerText = row.nim || '-';
+                document.getElementById('displayJadwalNama').innerText = row.nama || '-';
+                document.getElementById('displayJadwalKelasKon').innerText = `${row.kelas || '-'} / ${row.konsentrasi || '-'}`;
+                document.getElementById('displayJadwalDosen').innerText = row.dosen || '-';
+                document.getElementById('displayJadwalJudul').innerText = row.judul || '-';
+
+                document.getElementById('inputJadwalOnly').value = formatForDateTimeInput(row.jadwalSidang || row.jadwal || '');
+
+                document.getElementById('jJadwalModal').classList.remove('hidden');
+            }
+        }
+
+        function closeJadwalModal() {
+            document.getElementById('jJadwalModal').classList.add('hidden');
+        }
+
+        async function handleJadwalEditSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('btnSubmitJadwalEdit');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Menyimpan...';
+
+            const payload = {
+                action: 'updateJadwal',
+                nim: document.getElementById('jadwalNim').value.trim(),
+                jadwalSidang: document.getElementById('inputJadwalOnly').value
+            };
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    alert(res.message || "Jadwal sidang berhasil diperbarui!");
+                    closeJadwalModal();
+                    fetchAndRenderData();
+                } else {
+                    alert("Gagal: " + (res.message || "Terjadi kesalahan."));
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Kesalahan koneksi: " + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+
+        function calcLiveAverage() {
+            const nPem = parseFloat(document.getElementById('formPem').value) || 0;
+            const nP1 = parseFloat(document.getElementById('formP1').value) || 0;
+            const nP2 = parseFloat(document.getElementById('formP2').value) || 0;
+            const nKet = parseFloat(document.getElementById('formKet').value) || 0;
+
+            const nAkhir = (nP1 * 0.3) + (nP2 * 0.3) + (nKet * 0.3) + (nPem * 0.1);
+            document.getElementById('liveAverage').innerText = nAkhir.toFixed(2);
+        }
+
+        function resetTableScore() {
+            document.getElementById('tableSearchScore').value = '';
+            processAndRenderDashboard(globalData);
+        }
+
+        function resetTableAcademic() {
+            document.getElementById('tableSearchAcademic').value = '';
+            processAndRenderDashboard(globalData);
+        }
+
+        function resetBiodataSelection() {
+            activeSelectedNim = null;
+            document.getElementById('selectedBiodataBanner').classList.add('hidden');
+            document.getElementById('searchBiodata').value = '';
+            renderBiodataCards(globalData);
+        }
+
+        function resetAllFilters() {
+            document.getElementById('tableSearchScore').value = '';
+            document.getElementById('tableSearchAcademic').value = '';
+            resetBiodataSelection();
+            processAndRenderDashboard(globalData);
+        }
+
+        function filterTableScore() {
+            const query = document.getElementById('tableSearchScore').value.toLowerCase();
+            const filtered = globalData.filter(row => 
+                (row.nim && String(row.nim).toLowerCase().includes(query)) ||
+                (row.nama && row.nama.toLowerCase().includes(query))
+            );
+            processAndRenderDashboard(filtered);
+        }
+
+        function filterTableAcademic() {
+            const query = document.getElementById('tableSearchAcademic').value.toLowerCase();
+            const filtered = globalData.filter(row => 
+                (row.nim && String(row.nim).toLowerCase().includes(query)) ||
+                (row.nama && row.nama.toLowerCase().includes(query)) ||
+                (row.judul && row.judul.toLowerCase().includes(query)) ||
+                (row.jadwalSidang && String(row.jadwalSidang).toLowerCase().includes(query))
+            );
+            processAndRenderDashboard(filtered);
+        }
+
+        function filterBiodataCards() {
+            document.getElementById('selectedBiodataBanner').classList.add('hidden');
+            activeSelectedNim = null;
+            const query = document.getElementById('searchBiodata').value.toLowerCase();
+            const filtered = globalData.filter(row => 
+                (row.nim && String(row.nim).toLowerCase().includes(query)) ||
+                (row.nama && row.nama.toLowerCase().includes(query)) ||
+                (row.judul && row.judul.toLowerCase().includes(query))
+            );
+            renderBiodataCards(filtered);
+        }
+
+        function selectSingleBiodataCard(targetNim) {
+            const selectedRow = globalData.filter(row => String(row.nim).trim() === String(targetNim).trim());
+            if (selectedRow.length > 0) {
+                activeSelectedNim = String(targetNim).trim();
+                const banner = document.getElementById('selectedBiodataBanner');
+                const nameLabel = document.getElementById('selectedBiodataName');
+                banner.classList.remove('hidden');
+                nameLabel.innerText = `${selectedRow[0].nama} (${selectedRow[0].nim})`;
+                
+                renderBiodataCards(selectedRow);
+            }
+        }
+
+        async function fetchAndRenderData() {
+            const statusText = document.getElementById('statusText');
+            statusText.innerText = "Mengambil Data...";
+
+            try {
+                const response = await fetch(WEB_APP_URL);
+                if (response.ok) {
+                    const jsonResult = await response.json();
+                    if (jsonResult.records && Array.isArray(jsonResult.records)) {
+                        globalData = jsonResult.records;
+                        processAndRenderDashboard(globalData);
+                        statusText.innerText = "Terhubung";
+                        return;
+                    }
+                }
+                throw new Error("Respon web app tidak valid.");
+            } catch (err) {
+                console.error("Gagal memuat data:", err);
+                statusText.innerText = "Gagal Memuat";
+            }
+        }
+
+        function getGrade(score) {
+            if (score >= 80) return { letter: 'A', status: 'LULUS', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' };
+            if (score >= 75) return { letter: 'AB', status: 'LULUS', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' };
+            if (score >= 68) return { letter: 'B', status: 'LULUS', color: 'bg-sky-500/20 text-sky-400 border-sky-500/30' };
+            if (score >= 62) return { letter: 'BC', status: 'ULANG', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' };
+            return { letter: 'E', status: 'TIDAK LULUS', color: 'bg-rose-500/20 text-rose-400 border-rose-500/30' };
+        }
+
+        function processAndRenderDashboard(data) {
+            const total = data.length;
+
+            let sumAkhir = 0, maxAkhir = 0, lulusCount = 0;
+            let sumPem = 0, sumP1 = 0, sumP2 = 0, sumKet = 0;
+            const grades = { 'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0 };
+
+            const konsentrasiCount = {};
+            const kelasCount = {};
+            const dosenCount = {};
+
+            data.forEach(row => {
+                const nPem = Number(row.nilaiPembimbing) || 0;
+                const nP1 = Number(row.nilaiPenguji1) || 0;
+                const nP2 = Number(row.nilaiPenguji2) || 0;
+                const nKet = Number(row.nilaiKetua) || 0;
+                
+                const nAkhir = (nP1 * 0.3) + (nP2 * 0.3) + (nKet * 0.3) + (nPem * 0.1);
+
+                sumAkhir += nAkhir;
+                if (nAkhir > maxAkhir) maxAkhir = nAkhir;
+                if (nAkhir >= 65) lulusCount++;
+
+                sumPem += nPem;
+                sumP1 += nP1;
+                sumP2 += nP2;
+                sumKet += nKet;
+
+                const g = getGrade(nAkhir).letter;
+                grades[g] = (grades[g] || 0) + 1;
+
+                const konsentrasi = (row.konsentrasi || 'Lainnya').trim();
+                const kelas = (row.kelas || 'Lainnya').trim();
+                const dosen = (row.dosen || 'Lainnya').trim();
+
+                if (row.konsentrasi) konsentrasiCount[konsentrasi] = (konsentrasiCount[konsentrasi] || 0) + 1;
+                if (row.kelas) kelasCount[kelas] = (kelasCount[kelas] || 0) + 1;
+                if (row.dosen) dosenCount[dosen] = (dosenCount[dosen] || 0) + 1;
+            });
+
+            const avgVal = total > 0 ? (sumAkhir / total).toFixed(2) : '0.00';
+            const passPct = total > 0 ? `${Math.round((lulusCount / total) * 100)}%` : '0%';
+
+            document.getElementById('cardTotalMhs').innerText = total;
+            document.getElementById('cardAvgScore').innerText = avgVal;
+            document.getElementById('cardTotalBiodata').innerText = total;
+            document.getElementById('cardPassRate').innerText = passPct;
+
+            renderChartComponents([
+                total > 0 ? (sumPem / total).toFixed(2) : 0,
+                total > 0 ? (sumP1 / total).toFixed(2) : 0,
+                total > 0 ? (sumP2 / total).toFixed(2) : 0,
+                total > 0 ? (sumKet / total).toFixed(2) : 0
+            ]);
+            renderChartGrade(grades);
+            renderChartKonsentrasi(konsentrasiCount);
+            renderChartKelas(kelasCount);
+            renderChartDosen(dosenCount);
+
+            renderTableScore(data);
+            renderTableAcademic(data);
+            renderBiodataCards(data);
+        }
+
+        function renderChartComponents(avgScores) {
+            const ctx = document.getElementById('chartComponents').getContext('2d');
+            if (chartComponentsInstance) chartComponentsInstance.destroy();
+
+            chartComponentsInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pembimbing', 'Penguji 1', 'Penguji 2', 'Ketua Sidang'],
+                    datasets: [{
+                        data: avgScores,
+                        backgroundColor: ['#ea580c', '#f59e0b', '#38bdf8', '#818cf8'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } },
+                        y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' }, min: 0, max: 100 }
+                    }
+                }
+            });
+        }
+
+        function renderChartGrade(grades) {
+            const ctx = document.getElementById('chartGrade').getContext('2d');
+            if (chartGradeInstance) chartGradeInstance.destroy();
+
+            chartGradeInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Grade A', 'Grade B', 'Grade C', 'Grade D/E'],
+                    datasets: [{
+                        data: [grades['A'], grades['B'], grades['C'], (grades['D'] + grades['E'])],
+                        backgroundColor: ['#ea580c', '#f59e0b', '#38bdf8', '#f43f5e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 10 } } } }
+                }
+            });
+        }
+
+        function renderChartKonsentrasi(counts) {
+            const ctx = document.getElementById('chartKonsentrasi').getContext('2d');
+            if (chartKonsentrasiInstance) chartKonsentrasiInstance.destroy();
+
+            chartKonsentrasiInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(counts).length ? Object.keys(counts) : ['Belum Ada Data'],
+                    datasets: [{
+                        data: Object.values(counts).length ? Object.values(counts) : [1],
+                        backgroundColor: ['#ea580c', '#f59e0b', '#38bdf8', '#a855f7'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 10 } } } }
+                }
+            });
+        }
+
+        function renderChartKelas(counts) {
+            const ctx = document.getElementById('chartKelas').getContext('2d');
+            if (chartKelasInstance) chartKelasInstance.destroy();
+
+            chartKelasInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        data: Object.values(counts),
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } },
+                        y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
+            });
+        }
+
+        function renderChartDosen(counts) {
+            const ctx = document.getElementById('chartDosen').getContext('2d');
+            if (chartDosenInstance) chartDosenInstance.destroy();
+
+            const sortedDosen = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            chartDosenInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedDosen.map(item => item[0].split(',')[0]),
+                    datasets: [{
+                        data: sortedDosen.map(item => item[1]),
+                        backgroundColor: '#ea580c',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderTableScore(data) {
+            currentScoreData = data;
+            const tbody = document.getElementById('tableBodyScore');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-xs text-gray-500">Tidak ada data.</td></tr>`;
+                return;
+            }
+
+            data.forEach((row) => {
+                const nPem = Number(row.nilaiPembimbing) || 0;
+                const nP1 = Number(row.nilaiPenguji1) || 0;
+                const nP2 = Number(row.nilaiPenguji2) || 0;
+                const nKet = Number(row.nilaiKetua) || 0;
+                const nAkhir = (nP1 * 0.3) + (nP2 * 0.3) + (nKet * 0.3) + (nPem * 0.1);
+                const gInfo = getGrade(nAkhir);
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/5 transition";
+                tr.innerHTML = `
+                    <td class="p-4 font-mono font-bold text-orange-400">${row.nim || '-'}</td>
+                    <td class="p-4 font-semibold text-white">${row.nama || '-'}</td>
+                    <td class="p-4 text-center text-gray-400">${nPem}</td>
+                    <td class="p-4 text-center text-gray-400">${nP1}</td>
+                    <td class="p-4 text-center text-gray-400">${nP2}</td>
+                    <td class="p-4 text-center text-gray-400">${nKet}</td>
+                    <td class="p-4 text-center font-bold text-white">${nAkhir.toFixed(2)}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${gInfo.color}">${gInfo.letter}</span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="openModal('edit', '${row.nim}')" class="glass-btn-light text-[11px] px-3 py-1.5 rounded-lg font-medium">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function formatJadwalDisplay(val) {
+            if (!val) return '-';
+            try {
+                const d = new Date(val);
+                if (isNaN(d.getTime())) return val;
+                return d.toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+            } catch (e) {
+                return val;
+            }
+        }
+
+        function formatForDateTimeInput(dateStr) {
+            if (!dateStr) return '';
+            const str = String(dateStr).trim();
+            if (str.includes('/')) {
+                const parts = str.split(' ');
+                const dateParts = parts[0].split('/');
+                const timePart = parts[1] || '00:00';
+                if (dateParts.length === 3) {
+                    const day = dateParts[0].padStart(2, '0');
+                    const month = dateParts[1].padStart(2, '0');
+                    const year = dateParts[2];
+                    return `${year}-${month}-${day}T${timePart}`;
+                }
+            }
+            if (str.includes('T')) return str.slice(0, 16);
+            return '';
+        }
+
+        function renderTableAcademic(data) {
+            currentAcademicData = data;
+            const tbody = document.getElementById('tableBodyAcademic');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-xs text-gray-500">Tidak ada data.</td></tr>`;
+                return;
+            }
+
+            data.forEach((row) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/5 transition";
+                tr.innerHTML = `
+                    <td class="p-4 text-center font-mono font-bold text-orange-400 truncate">${row.nim || '-'}</td>
+                    <td class="p-4 font-semibold text-white truncate" title="${row.nama || '-'}">${row.nama || '-'}</td>
+                    <td class="p-4 text-center"><span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-300 font-medium block truncate">${row.kelas || '-'}</span></td>
+                    <td class="p-4 text-center"><span class="px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 font-medium block truncate">${row.konsentrasi || '-'}</span></td>
+                    <td class="p-4 text-gray-300 leading-relaxed whitespace-normal break-words">${row.judul || '-'}</td>
+                    <td class="p-4 text-gray-400 truncate" title="${row.dosen || '-'}">${row.dosen || '-'}</td>
+                    <td class="p-4 text-center font-mono text-xs text-amber-400 truncate" title="${row.jadwalSidang || '-'}">${formatJadwalDisplay(row.jadwalSidang)}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="openJadwalModal('${row.nim}')" class="glass-btn-light text-[11px] px-3 py-1.5 rounded-lg font-medium hover:text-orange-400 transition" title="Update Jadwal Sidang">Edit</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderBiodataCards(data) {
+            currentBiodataData = data;
+            const container = document.getElementById('biodataContainer');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = `<div class="col-span-full p-8 text-center text-xs text-gray-500 glass-recessed">Tidak ada data biodata.</div>`;
+                return;
+            }
+
+            data.forEach((row) => {
+                const nPem = Number(row.nilaiPembimbing) || 0;
+                const nP1 = Number(row.nilaiPenguji1) || 0;
+                const nP2 = Number(row.nilaiPenguji2) || 0;
+                const nKet = Number(row.nilaiKetua) || 0;
+                const nAkhir = (nP1 * 0.3) + (nP2 * 0.3) + (nKet * 0.3) + (nPem * 0.1);
+                const gInfo = getGrade(nAkhir);
+
+                const card = document.createElement('div');
+                card.onclick = () => selectSingleBiodataCard(row.nim);
+                card.className = "glass-panel p-5 space-y-4 flex flex-col justify-between cursor-pointer hover:border-orange-500/40 transition-all duration-300";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between border-b border-white/10 pb-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center font-bold text-base">
+                                    ${(row.nama || 'M').charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-white text-sm leading-snug">${row.nama || '-'}</h5>
+                                    <p class="text-[11px] font-mono font-semibold text-orange-400">${row.nim || '-'}</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${gInfo.color}">${gInfo.letter}</span>
+                        </div>
+
+                        <div class="space-y-2 mt-3 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Kelas / Program:</span>
+                                <span class="font-medium text-gray-200">${row.kelas || '-'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Konsentrasi:</span>
+                                <span class="font-medium text-orange-400">${row.konsentrasi || '-'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Pembimbing:</span>
+                                <span class="font-medium text-gray-200">${row.dosen || '-'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Jadwal Sidang:</span>
+                                <span class="font-medium text-amber-400 font-mono">${formatJadwalDisplay(row.jadwalSidang)}</span>
+                            </div>
+                            <div class="pt-2 border-t border-white/5">
+                                <span class="text-gray-400 block mb-1">Judul TA:</span>
+                                <p class="text-gray-300 italic glass-recessed p-2.5 text-[11px] leading-relaxed">${row.judul || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-recessed p-3 space-y-1.5 border border-white/5">
+                        <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-gray-400">Nilai Akhir Sidang</span>
+                            <span class="text-lg font-extrabold text-white font-mono">${nAkhir.toFixed(2)} (${gInfo.letter})</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function getTargetDataForForm() {
+            if (activeSelectedNim) {
+                const found = globalData.find(item => String(item.nim).trim() === String(activeSelectedNim).trim());
+                if (found) return [found];
+            }
+            return currentBiodataData.length > 0 ? currentBiodataData : globalData;
+        }
+
+        function downloadFormLayoutPDF() {
+            const targets = getTargetDataForForm();
+            if (targets.length === 0) return alert("Tidak ada data mahasiswa untuk dicetak!");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+
+            targets.forEach((row, idx) => {
+                if (idx > 0) doc.addPage();
+
+                const nPem = Number(row.nilaiPembimbing) || 0;
+                const nP1 = Number(row.nilaiPenguji1) || 0;
+                const nP2 = Number(row.nilaiPenguji2) || 0;
+                const nKet = Number(row.nilaiKetua) || 0;
+                const nAkhir = (nP1 * 0.3) + (nP2 * 0.3) + (nKet * 0.3) + (nPem * 0.1);
+                const gInfo = getGrade(nAkhir);
+
+                let startY = 55;
+                const labelX = 20;
+                const colonX = 65;
+                const valueX = 68;
+
+                const bioFields = [
+                    ["NIM", row.nim || '-'],
+                    ["NAMA", (row.nama || '-').toUpperCase()],
+                    ["KELAS / PROGRAM", row.kelas || '-'],
+                    ["KONSENTRASI", row.konsentrasi || '-'],
+                    ["PEMBIMBING", row.dosen || '-'],
+                    ["JUDUL TA", row.judul || '-']
+                ];
+
+                doc.setFont("times", "normal");
+                doc.setFontSize(11);
+                bioFields.forEach(([label, val]) => {
+                    doc.setFont("times", "bold");
+                    doc.text(label, labelX, startY);
+                    doc.text(":", colonX, startY);
+                    
+                    doc.setFont("times", "normal");
+                    if (label === "JUDUL TA") {
+                        const splitTitle = doc.splitTextToSize(val, 115);
+                        doc.text(splitTitle, valueX, startY);
+                        startY += (splitTitle.length * 5) + 3;
+                    } else {
+                        doc.text(val, valueX, startY);
+                        startY += 7;
+                    }
+                });
+
+                startY += 4;
+                const tableBody = [
+                    ["1", "Nilai Pembimbing", "10%", nPem.toFixed(1), (nPem * 0.1).toFixed(2)],
+                    ["2", "Nilai Penguji 1", "30%", nP1.toFixed(1), (nP1 * 0.3).toFixed(2)],
+                    ["3", "Nilai Penguji 2", "30%", nP2.toFixed(1), (nP2 * 0.3).toFixed(2)],
+                    ["4", "Nilai Ketua Sidang", "30%", nKet.toFixed(1), (nKet * 0.3).toFixed(2)],
+                    [
+                        { content: "JUMLAH / NILAI AKHIR", colSpan: 4, styles: { halign: 'left', fontStyle: 'bold' } }, 
+                        { content: `${nAkhir.toFixed(2)} (${gInfo.letter})`, styles: { halign: 'center', fontStyle: 'bold' } }
+                    ]
+                ];
+
+                doc.autoTable({
+                    head: [["NO", "KOMPONEN EVALUASI", "BOBOT", "NILAI", "NILAI TERBOBOT"]],
+                    body: tableBody,
+                    startY: startY,
+                    theme: 'plain',
+                    styles: { font: 'times', fontSize: 11 },
+                    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', lineWidth: 0.3, lineColor: [0, 0, 0], font: 'times', fontSize: 11 },
+                    bodyStyles: { textColor: [0, 0, 0], lineWidth: 0.3, lineColor: [0, 0, 0], font: 'times', fontSize: 11 },
+                    columnStyles: { 0: { halign: 'center', cellWidth: 12 }, 1: { cellWidth: 75 }, 2: { halign: 'center', cellWidth: 22 }, 3: { halign: 'center', cellWidth: 26 }, 4: { halign: 'center', cellWidth: 35 } },
+                    margin: { left: 20, right: 20 }
+                });
+
+                let finalY = doc.lastAutoTable.finalY + 15;
+                if (finalY > 240) {
+                    doc.addPage();
+                    finalY = 55;
+                }
+
+                const todayStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                const rightAlignX = 130;
+                
+                doc.setFont("times", "normal");
+                doc.setFontSize(11);
+                doc.text(`Cimahi, ${todayStr}`, rightAlignX, finalY);
+
+                finalY += 6;
+                doc.text("Ketua Program Studi", rightAlignX, finalY);
+
+                finalY += 25;
+                doc.text("(.........................................)", rightAlignX - 5, finalY);
+            });
+
+            doc.save(`Formulir_Sidang_TA_Portrait_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+
+        function downloadPDFScore() {
+            if (!currentScoreData || currentScoreData.length === 0) return alert("Tidak ada data untuk diunduh!");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            doc.text("Laporan Penilaian Sidang Tugas Akhir Elektro", 14, 15);
+            const tableData = currentScoreData.map(row => {
+                const nPem = Number(row.nilaiPembimbing) || 0;
+                const nP1 = Number(row.nilaiPenguji1) || 0;
+                const nP2 = Number(row.nilaiPenguji2) || 0;
+                const nKet = Number(row.nilaiKetua) || 0;
+                const nAkhir = (nP1 * 0.3) + (nP2 * 0.3) + (nKet * 0.3) + (nPem * 0.1);
+                return [row.nim || '-', row.nama || '-', nPem, nP1, nP2, nKet, nAkhir.toFixed(2), getGrade(nAkhir).letter];
+            });
+            doc.autoTable({ head: [['NIM', 'Nama Mahasiswa', 'Pembimbing', 'Penguji 1', 'Penguji 2', 'Ketua Sidang', 'Nilai Akhir', 'Grade']], body: tableData, startY: 25 });
+            doc.save(`Laporan_Nilai_Sidang_TA.pdf`);
+        }
+
+        function downloadPDFAcademic() {
+            if (!currentAcademicData || currentAcademicData.length === 0) return alert("Tidak ada data untuk diunduh!");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            doc.text("Laporan Data Akademik & Judul TA Elektro", 14, 15);
+            const tableData = currentAcademicData.map(row => [row.nim || '-', row.nama || '-', row.kelas || '-', row.konsentrasi || '-', row.judul || '-', row.dosen || '-', formatJadwalDisplay(row.jadwalSidang)]);
+            doc.autoTable({ head: [['NIM', 'Nama Mahasiswa', 'Kelas', 'Konsentrasi', 'Judul Tugas Akhir', 'Dosen Pembimbing', 'Jadwal Sidang']], body: tableData, startY: 25 });
+            doc.save(`Laporan_Data_Akademik_TA.pdf`);
+        }
+
+        function exportBiodataExcel() {
+            if (!currentBiodataData || currentBiodataData.length === 0) return alert("Tidak ada data!");
+            const excelRows = currentBiodataData.map((row, index) => {
+                const nPem = Number(row.nilaiPembimbing) || 0;
+                const nP1 = Number(row.nilaiPenguji1) || 0;
+                const nP2 = Number(row.nilaiPenguji2) || 0;
+                const nKet = Number(row.nilaiKetua) || 0;
+                const nAkhir = (nP1 * 0.3) + (nP2 * 0.3) + (nKet * 0.3) + (nPem * 0.1);
+                const gInfo = getGrade(nAkhir);
+                return {
+                    "No": index + 1, "NIM": row.nim || '-', "Nama": row.nama || '-', "Kelas/Program": row.kelas || '-', "Konsentrasi": row.konsentrasi || '-', "Judul TA": row.judul || '-', "Dosen Pembimbing": row.dosen || '-', "Jadwal Sidang": row.jadwalSidang || '-',
+                    "Nilai Pembimbing": nPem, "Nilai Penguji 1": nP1, "Nilai Penguji 2": nP2, "Nilai Ketua": nKet, "Nilai Akhir": parseFloat(nAkhir.toFixed(2)), "Grade": gInfo.letter
+                };
+            });
+            const worksheet = XLSX.utils.json_to_sheet(excelRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data TA");
+            XLSX.writeFile(workbook, `Katalog_Biodata_dan_Nilai_TA.xlsx`);
+        }
+
+        function openModal(mode, targetNim = null) {
+            currentMode = mode;
+            const modal = document.getElementById('dataModal');
+            const title = document.getElementById('modalTitle');
+
+            if (mode === 'add') {
+                title.innerHTML = '<i class="fa-solid fa-user-plus text-orange-400"></i> Input Data Mahasiswa & Penilaian Baru';
+                document.getElementById('unifiedForm').reset();
+                document.getElementById('formOldNim').value = '';
+                document.getElementById('formJadwal').value = '';
+                document.getElementById('liveAverage').innerText = '0.00';
+            } else if (mode === 'edit' && targetNim) {
+                title.innerHTML = '<i class="fa-solid fa-pen-to-square text-orange-400"></i> Edit Data Mahasiswa & Penilaian';
+                const row = globalData.find(item => String(item.nim).trim() === String(targetNim).trim());
+                if (row) {
+                    document.getElementById('formOldNim').value = row.nim || '';
+                    document.getElementById('formNim').value = row.nim || '';
+                    document.getElementById('formNama').value = row.nama || '';
+                    document.getElementById('formKelas').value = row.kelas || '';
+                    document.getElementById('formKonsentrasi').value = row.konsentrasi || '';
+                    document.getElementById('formJudul').value = row.judul || '';
+                    document.getElementById('formDosen').value = row.dosen || '';
+                    document.getElementById('formJadwal').value = formatForDateTimeInput(row.jadwalSidang || row.jadwal || '');
+                    document.getElementById('formPem').value = row.nilaiPembimbing !== undefined ? row.nilaiPembimbing : '';
+                    document.getElementById('formP1').value = row.nilaiPenguji1 !== undefined ? row.nilaiPenguji1 : '';
+                    document.getElementById('formP2').value = row.nilaiPenguji2 !== undefined ? row.nilaiPenguji2 : '';
+                    document.getElementById('formKet').value = row.nilaiKetua !== undefined ? row.nilaiKetua : '';
+                    calcLiveAverage();
+                }
+            }
+            modal.classList.remove('hidden');
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('btnSubmitForm');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Menyimpan...';
+
+            const nPem = parseFloat(document.getElementById('formPem').value) || 0;
+            const nP1 = parseFloat(document.getElementById('formP1').value) || 0;
+            const nP2 = parseFloat(document.getElementById('formP2').value) || 0;
+            const nKet = parseFloat(document.getElementById('formKet').value) || 0;
+            const nAkhir = (nP1 * 0.3) + (nP2 * 0.3) + (nKet * 0.3) + (nPem * 0.1);
+
+            const payload = {
+                action: currentMode,
+                oldNim: document.getElementById('formOldNim').value,
+                nim: document.getElementById('formNim').value.trim(),
+                nama: document.getElementById('formNama').value.trim(),
+                kelas: document.getElementById('formKelas').value.trim(),
+                konsentrasi: document.getElementById('formKonsentrasi').value.trim(),
+                judul: document.getElementById('formJudul').value.trim(),
+                dosen: document.getElementById('formDosen').value.trim(),
+                jadwalSidang: document.getElementById('formJadwal').value,
+                nilaiPembimbing: nPem,
+                nilaiPenguji1: nP1,
+                nilaiPenguji2: nP2,
+                nilaiKetua: nKet,
+                nilaiAkhir: parseFloat(nAkhir.toFixed(2))
+            };
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    alert(res.message || "Data berhasil disimpan!");
+                    closeModal();
+                    fetchAndRenderData();
+                } else {
+                    alert("Gagal: " + (res.message || "Terjadi kesalahan."));
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Kesalahan koneksi: " + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+
+        window.onload = checkAuth;
+    </script>
+</body>
+</html>
